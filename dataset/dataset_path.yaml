@@ -1,0 +1,2 @@
+train : D:\Datasets\Kaggle\DigitRecognizer\train.csv
+test : D:\Datasets\Kaggle\DigitRecognizer\test.csv
