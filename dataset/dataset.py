@@ -25,7 +25,7 @@ DEFAULT_TRANSFORMS = [partial(cv2.resize, dsize=(128, 128)),
                     partial(cv2.erode, kernel=np.ones(shape=(5, 5)), iterations=2),
                       lambda image : cv2.threshold(src=image, thresh=1, maxval=255, type=cv2.THRESH_BINARY)[1],
                       ]
-
+DEFAULT_TRANSFORMS = None
 class DigitDataset(Dataset):
     IMAGE_SIZE = (28, 28)
     DEFAULT_YAML_PATH = Path(__file__).parent / "dataset_path.yaml"
@@ -69,7 +69,8 @@ class DigitDataset(Dataset):
         image = self.dataset.iloc[idx]
         image = cv2.convertScaleAbs(image.to_numpy().reshape(DigitDataset.IMAGE_SIZE).astype(int))
         label = self.labels[idx]
-        image = DigitDataset.transform_image(image, self.transforms)
+        if self.transforms is not None:
+            image = DigitDataset.transform_image(image, self.transforms)
         return image, label
 
     def __len__(self):
