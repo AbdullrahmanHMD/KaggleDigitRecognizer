@@ -15,26 +15,24 @@ def train_an_epoch(model : Module, data_loader : DataLoader, criterion : Module,
     total_loss = 0
     for x, y in data_loader:
         x = x.to(device=device)
+        y = y.type(torch.FloatTensor)
         y = y.to(device=device)
 
         optimizer.zero_grad()
 
         y_pred = model(x)
-
         _, y_pred = torch.max(y_pred, axis=1)
 
         loss = criterion(y_pred, y)
-
         total_loss += loss.item()
 
         loss.backward()
-
         optimizer.step()
 
     return total_loss
 
 
-def evaluate_an_epoch(model : Module, data_loader : DataLoader, criterion : Module, device : torch.device):
+def evaluate(model : Module, data_loader : DataLoader, criterion : Module, device : torch.device):
     model.eval()
     model = model.to(device=device)
 
@@ -42,6 +40,7 @@ def evaluate_an_epoch(model : Module, data_loader : DataLoader, criterion : Modu
     for x, y in data_loader:
         with torch.no_grad():
             x = x.to(device=device)
+            y = y.type(torch.FloatTensor)
             y = y.to(device=device)
 
             y_pred = model(x)
@@ -66,15 +65,15 @@ def train(model : Module,
           lr_scheduler : optim.lr_scheduler,
           epochs,
           device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-          verbose=False):
+          verbose=True):
 
     total_val_loss, total_train_loss = [], []
     train_accuracies, val_accuracies = [], []
-    for epoch in epochs:
+    for epoch in range(epochs):
         train_an_epoch(model=model, data_loader=train_loader, criterion=criterion, optimizer=optimizer, device=device)
 
-        train_evaluation_dict = evaluate_an_epoch(model=model, data_loader=train_loader, criterion=criterion, device=device)
-        val_evaluation_dict = evaluate_an_epoch(model=model, data_loader=val_loader, criterion=criterion, device=device)
+        train_evaluation_dict = evaluate(model=model, data_loader=train_loader, criterion=criterion, device=device)
+        val_evaluation_dict = evaluate(model=model, data_loader=val_loader, criterion=criterion, device=device)
         train_loss, train_accuray = train_evaluation_dict["loss"], train_evaluation_dict["accuracy"]
         val_loss, val_accuracy = val_evaluation_dict["loss"], val_evaluation_dict["accuracy"]
 

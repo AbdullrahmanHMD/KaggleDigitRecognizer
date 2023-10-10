@@ -19,6 +19,8 @@ import os
 import yaml
 from pathlib import Path
 from functools import partial
+from typing import Union
+from typing import Callable
 
 
 DEFAULT_TRANSFORMS = [partial(cv2.resize, dsize=(128, 128)),
@@ -34,13 +36,15 @@ class DigitDataset(Dataset):
         self.dataset_yaml_path = dataset_yaml_path
 
         self.dataset_path = None
-        if train:
+        self.train = train
+        if self.train:
             dataset_type = 'train'
         else:
             dataset_type = 'test'
 
         self.dataset_path = DigitDataset.load_dataset(dataset_yaml_path)[dataset_type]
-        self.dataset, self.labels = DigitDataset.load_dataset_csv(self.dataset_path)
+
+        self.dataset, self.labels = self.load_dataset_csv()
         self.transforms = transforms
 
     @staticmethod
@@ -50,18 +54,21 @@ class DigitDataset(Dataset):
         return yaml_content
 
 
-    @staticmethod
-    def load_dataset_csv(dataset_path : str):
-        dataset_df = pd.read_csv(dataset_path)
-        labels = dataset_df.label
-        dataset = dataset_df.drop("label", axis=1)
+    def load_dataset_csv(self):
+        dataset_df = pd.read_csv(self.dataset_path)
+        if self.train:
+            labels = dataset_df.label
+            dataset = dataset_df.drop("label", axis=1)
+            return dataset, labels
+        return dataset_df, []
 
-        return dataset, labels
-
     @staticmethod
-    def transform_image(image : np.ndarray, transforms : list):
-        for transform in transforms:
-            image = transform(image)
+    def transform_image(image : np.ndarray, transforms : Union[list, Callable]):
+        if isinstance(transforms, list):
+            for transform in transforms:
+                    image = transform(image)
+        else:
+            image = transforms(image)
         return image
 
 
@@ -74,7 +81,7 @@ class DigitDataset(Dataset):
         return image, label
 
     def __len__(self):
-        return len(self.labels)
+        return self.dataset.shape[0]
 
 
 if __name__ == "__main__":
@@ -85,5 +92,7 @@ if __name__ == "__main__":
     idx = random.randint(0, len(dset))
     image, label =  dset[idx]
 
-    cv2.imshow(str(label), image)
-    cv2.waitKey(0)
+    print(len(dset))
+
+    # cv2.imshow(str(label), image)
+    # cv2.waitKey(0)
