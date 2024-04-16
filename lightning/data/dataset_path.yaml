@@ -1,0 +1,2 @@
+train: D:\digit-recognizer\train.csv
+test: D:\digit-recognizer\test.csv
